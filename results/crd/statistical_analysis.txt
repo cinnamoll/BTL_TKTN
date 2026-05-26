@@ -1,0 +1,16 @@
+p-value < 0.05: Phương sai giữa các nhóm k khác biệt.
+
+             Df  Sum Sq  Mean Sq F value Pr(>F)
+k_factor      2 0.00427 0.002133   1.694  0.187
+Residuals   177 0.22288 0.001259               
+  Tukey multiple comparisons of means
+    95% family-wise confidence level
+
+Fit: aov(formula = f1_score ~ k_factor, data = crd_results)
+
+$k_factor
+            diff          lwr        upr     p adj
+5-3  0.010785883 -0.008583841 0.03015561 0.3880811
+10-3 0.013591354 -0.003868279 0.03105099 0.1596726
+10-5 0.002805472 -0.011721821 0.01733276 0.8915953
+

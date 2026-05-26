@@ -1,0 +1,36 @@
+Analysis of Variance Table
+
+Response: f1_score
+                    Df Sum Sq Mean Sq    F value Pr(>F)    
+k_factor             2  0.007  0.0037     2.0822 0.1257    
+max_depth            2 54.414 27.2072 15492.5722 <2e-16 ***
+k_factor:max_depth   4  0.005  0.0013     0.7311 0.5710    
+Residuals          531  0.933  0.0018                      
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Call:
+aov(formula = f1_score ~ k_factor * max_depth, data = crfd_results)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.209367 -0.026869 -0.000157  0.025349  0.133088 
+
+Coefficients:
+                          Estimate Std. Error t value Pr(>|t|)    
+(Intercept)              0.0263892  0.0076510   3.449 0.000607 ***
+k_factor5                0.0015829  0.0096779   0.164 0.870144    
+k_factor10               0.0007364  0.0087235   0.084 0.932760    
+max_depth5               0.3442108  0.0108202  31.812  < 2e-16 ***
+max_depthNone            0.7700148  0.0108202  71.165  < 2e-16 ***
+k_factor5:max_depth5     0.0105187  0.0136866   0.769 0.442508    
+k_factor10:max_depth5    0.0198484  0.0123369   1.609 0.108241    
+k_factor5:max_depthNone  0.0069146  0.0136866   0.505 0.613620    
+k_factor10:max_depthNone 0.0087195  0.0123369   0.707 0.480012    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.04191 on 531 degrees of freedom
+Multiple R-squared:  0.9832,	Adjusted R-squared:  0.9829 
+F-statistic:  3874 on 8 and 531 DF,  p-value: < 2.2e-16
+
