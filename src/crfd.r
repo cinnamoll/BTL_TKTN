@@ -3,10 +3,10 @@ library(caret)
 library(ranger) 
 library(MLmetrics)
 
-df <- read.csv('data/mlc_churn.csv', stringsAsFactors = FALSE)
+df <- read.csv('Code/BTL_TKTN/dataset/mlc_churn.csv', stringsAsFactors = FALSE)
 
 df$churn <- ifelse(df$churn == 'yes', 1, 0)
-y_target <- as.factor(df$churn)
+y_target <- as.factor(df$churn) 
 
 cat_cols <- sapply(df, function(x) is.character(x) || is.factor(x))
 for (col in names(df)[cat_cols]) {
@@ -16,29 +16,15 @@ for (col in names(df)[cat_cols]) {
 num_df <- df %>% select(-churn)
 corr_matrix <- abs(cor(num_df, use = "complete.obs"))
 
-to_drop_auto <- c()
-high_corr_details <- c()
+df <- subset(df, select=-c(total_day_charge, total_eve_charge, total_night_charge, total_intl_charge, voice_mail_plan))
 
-for (col in colnames(upper)) {
-  highly_corr <- rownames(upper)[which(upper[, col] > 0.95)]
-  for (row in highly_corr) {
-    corr_value <- upper[row, col]
-    to_drop_auto <- c(to_drop_auto, col)
-    high_corr_details <- c(high_corr_details, 
-                           sprintf("tương quan = %.2f với '%s'", col, corr_value, row))
-  }
-}
-
-to_drop_auto <- unique(to_drop_auto)
-
-cols_to_drop <- c(to_drop_auto, "churn")
-X <- df[, !(names(df) %in% cols_to_drop)]
+X <- subset(df, select=-c(churn))
 
 k_values <- c(3, 5, 10)
 max_depths <- c(3, 5, 0) 
 crfd_results <- data.frame()
 
-dir.create("results/crfd", recursive = TRUE, showWarnings = FALSE)
+dir.create("Code/BTL_TKTN/results/crfd", recursive = TRUE, showWarnings = FALSE)
 
 for (k in k_values) {
   set.seed(1234)
@@ -58,13 +44,17 @@ for (k in k_values) {
         x = X_train, 
         y = y_train, 
         max.depth = depth, 
-        seed = RANDOM_SEED
+        seed = 1234
       )
       
       y_pred <- predict(rf, data = X_test)$predictions
       f1 <- F1_Score(y_pred = as.numeric(as.character(y_pred)), 
                      y_true = as.numeric(as.character(y_test)), positive = "1")
       
+      if (is.na(f1)) {
+        f1 <- 0
+      }
+
       crfd_results <- rbind(crfd_results, data.frame(
         k = k, 
         max_depth = depth_str, 
@@ -74,32 +64,37 @@ for (k in k_values) {
   }
 }
 
-write.csv(crfd_results, 'results/crfd/crfd_results.csv', row.names = FALSE)
+write.csv(crfd_results, 'Code/BTL_TKTN/results/crfd/crfd_results.csv', row.names = FALSE)
 
 crfd_results$k_factor <- as.factor(crfd_results$k)
-crfd_results$depth_factor <- as.factor(crfd_results$max_depth)
+crfd_results$max_depth <- as.factor(crfd_results$max_depth)
 
-model_crfd <- aov(f1_score ~ k_factor * depth_factor, data = crfd_results)
+model_crfd <- aov(f1_score ~ k_factor * max_depth, data = crfd_results)
 anova_table <- anova(model_crfd)
 
-file_conn <- file('results/crfd/statistical_analysis.txt', open="w")
+file_conn <- file('Code/BTL_TKTN/results/crfd/statistical_analysis.txt', open="w")
 
 capture.output(anova_table, file = file_conn)
 
-capture.output(summary.lm(model_crfd), file = file_conn)
+capture.output(summary.lm(model_crfd), file = file_conn, append=TRUE)
 close(file_conn)
 
 
-png('results/crfd/interaction_plot.png', width=800, height=600, res=150)
-interaction.plot(x.factor = crfd_results$k, 
-                 trace.factor = crfd_results$max_depth, 
-                 response = crfd_results$f1_score, 
-                 type = "b", 
-                 pch = c(18, 17, 16), 
-                 col = c("red", "blue", "green"),
-                 xlab = "Số fold (k)", 
-                 ylab = "Trung bình F1-Score",
-                 trace.label = "max_depth",
-                 main = "Đồ thị Tương tác giữa Số fold (k) và Độ sâu cây (max_depth)")
+png('Code/BTL_TKTN/results/crfd/interaction_plot.png', width=800, height=600, res=150)
+par(mar=c(5, 4, 4, 2) + 0.1) 
+
+interaction.plot(
+  x.factor = crfd_results$k_factor,
+  trace.factor = crfd_results$max_depth, 
+  response = crfd_results$f1_score, 
+  type = "b", 
+  pch = c(18, 17, 16), 
+  col = c("red", "blue", "green"),
+  xlab = "Số fold (k)", 
+  ylab = "Trung bình F1-Score",
+  trace.label = "max_depth",
+  ylim = c(0, 1), 
+  main = "Tương tác giữa Số fold (k) và Độ sâu cây"
+)
 dev.off()
 
